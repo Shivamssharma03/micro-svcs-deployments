@@ -1,0 +1,148 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - hipster-net
+
+  adservice:
+    build: ./src/adservice
+    ports:
+      - "9555:9555"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+
+  productcatalogservice:
+    build: ./src/productcatalogservice
+    ports:
+      - "3550:3550"
+    networks:
+      - hipster-net
+
+  currencyservice:
+    build: ./src/currencyservice
+    environment:
+      - PORT=7000
+    ports:
+      - "7000:7000"
+    networks:
+      - hipster-net
+
+  cartservice:
+    build: ./src/cartservice
+    environment:
+      - REDIS_ADDRESS=redis:6379
+    ports:
+      - "7070:7070"
+    networks:
+      - hipster-net
+    depends_on:
+      - redis
+      - productcatalogservice
+
+  recommendationservice:
+    build: ./src/recommendationservice
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+
+  checkoutservice:
+    build: ./src/checkoutservice
+    ports:
+      - "5050:5050"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+      - paymentservice
+      - emailservice
+      - currencyservice
+      - cartservice
+      - shippingservice
+
+  shippingservice:
+    build: ./src/shippingservice
+    environment:
+      - PORT=50052
+    ports:
+      - "50052:50052"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+
+  paymentservice:
+    build: ./src/paymentservice
+    environment:
+      - PORT=50051
+    ports:
+      - "50051:50051"
+    networks:
+      - hipster-net
+
+  emailservice:
+    build: ./src/emailservice
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+    networks:
+      - hipster-net
+
+  shoppingassistantservice:
+    build: ./src/shoppingassistantservice
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+    networks:
+      - hipster-net
+
+  frontend:
+    build: ./src/frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:7070
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8081
+      - SHIPPING_SERVICE_ADDR=shippingservice:50052
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:5050
+      - AD_SERVICE_ADDR=adservice:9555
+      - SHOPPING_ASSISTANT_SERVICE_ADDR=shoppingassistantservice:8083
+      - ENABLE_PROFILER=0
+      - ENABLE_TRACING=0
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+      - currencyservice
+      - cartservice
+      - recommendationservice
+      - shippingservice
+      - checkoutservice
+      - adservice
+      - shoppingassistantservice
+
+  loadgenerator:
+    build: ./src/loadgenerator
+    networks:
+      - hipster-net
+    depends_on:
+      - frontend
+
+networks:
+  hipster-net:
+    driver: bridge

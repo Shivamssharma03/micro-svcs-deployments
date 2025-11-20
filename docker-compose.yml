@@ -1,0 +1,172 @@
+version: "3.8"
+
+services:
+  # core supporting infra
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - hipster-net
+
+  # Java Ad Service (gRPC)
+  adservice:
+    build: ./src/adservice
+    environment:
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - PORT=9555
+    ports:
+      - "9555:9555"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+
+  # Product Catalog (gRPC)
+  productcatalogservice:
+    build: ./src/productcatalogservice
+    ports:
+      - "3550:3550"
+    networks:
+      - hipster-net
+
+  # Currency service (gRPC)
+  currencyservice:
+    build: ./src/currencyservice
+    environment:
+      - PORT=7000
+      - DISABLE_PROFILER=true
+    ports:
+      - "7000:7000"
+    networks:
+      - hipster-net
+
+  # Cart service (uses Redis)
+  cartservice:
+    build: ./src/cartservice
+    environment:
+      - REDIS_ADDRESS=redis:6379
+    ports:
+      - "7070:7070"
+    networks:
+      - hipster-net
+    depends_on:
+      - redis
+      - productcatalogservice
+
+  # Recommendation (HTTP/gRPC)
+  recommendationservice:
+    build: ./src/recommendationservice
+    environment:
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - PORT=8080
+    ports:
+      - "8081:8080"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+
+  # Checkout service (depends on many other services)
+  checkoutservice:
+    build: ./src/checkoutservice
+    environment:
+      - CART_SERVICE_ADDR=cartservice:7070
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - PAYMENT_SERVICE_ADDR=paymentservice:50051
+      - EMAIL_SERVICE_ADDR=emailservice:8080
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - PORT=5050
+    ports:
+      - "5050:5050"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+      - paymentservice
+      - emailservice
+      - currencyservice
+      - cartservice
+      - shippingservice
+
+  # Shipping (gRPC)
+  shippingservice:
+    build: ./src/shippingservice
+    environment:
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - PORT=50051
+    ports:
+      - "50051:50051"
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+
+  # Payment (gRPC)
+  paymentservice:
+    build: ./src/paymentservice
+    environment:
+      - PORT=50051
+      - DISABLE_PROFILER=true
+    ports:
+      - "50052:50051"
+    networks:
+      - hipster-net
+
+  # Email (HTTP)
+  emailservice:
+    build: ./src/emailservice
+    ports:
+      - "8082:8080"
+    networks:
+      - hipster-net
+
+  # Shopping Assistant (optional web service used by frontend)
+  shoppingassistantservice:
+    build: ./src/shoppingassistantservice
+    ports:
+      - "80:80"
+    networks:
+      - hipster-net
+
+  # Frontend (Go)
+  frontend:
+    build: ./src/frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:7070
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8080
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:5050
+      - AD_SERVICE_ADDR=adservice:9555
+      - SHOPPING_ASSISTANT_SERVICE_ADDR=shoppingassistantservice:80
+      - ENABLE_PROFILER=0
+      - ENABLE_TRACING=0
+    networks:
+      - hipster-net
+    depends_on:
+      - productcatalogservice
+      - currencyservice
+      - cartservice
+      - recommendationservice
+      - shippingservice
+      - checkoutservice
+      - adservice
+      - shoppingassistantservice
+
+  # Optional load generator (useful to create traffic)
+  loadgenerator:
+    build: ./src/loadgenerator
+    networks:
+      - hipster-net
+    depends_on:
+      - frontend
+
+networks:
+  hipster-net:
+    driver: bridge
