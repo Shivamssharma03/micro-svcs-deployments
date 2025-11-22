@@ -1,44 +1,50 @@
-# Copyright 2024 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# ============================
+# Builder Stage
+# ============================
+FROM --platform=$BUILDPLATFORM python:3.12-slim AS builder
+WORKDIR /app
 
-FROM --platform=$BUILDPLATFORM python:3.12.8-slim@sha256:123be5684f39d8476e64f47a5fddf38f5e9d839baff5c023c815ae5bdfae0df7 AS base
-
-FROM base AS builder
-
-RUN apt-get -qq update \
-    && apt-get install -y --no-install-recommends g++ \
+# Install system dependencies needed to build Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    python3-dev \
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# get packages
+# Install Python dependencies into a separate prefix
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
 
-FROM base
-# Enable unbuffered logging
+
+# ============================
+# Runtime Stage
+# ============================
+FROM python:3.12-slim
+
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
 
-# get packages
 WORKDIR /shoppingassistantservice
 
-# Grab packages from builder
-COPY --from=builder /usr/local/lib/python3.12/ /usr/local/lib/python3.12/
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    libffi8 \
+    libssl3 \
+    libstdc++6 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Add the application
+# Copy Python dependencies from builder
+COPY --from=builder /install /usr/local
+
+# Copy application code
 COPY . .
 
-# set listen port
-ENV PORT "8080"
 EXPOSE 8080
-
 ENTRYPOINT ["python", "shoppingassistantservice.py"]

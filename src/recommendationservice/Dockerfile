@@ -1,48 +1,38 @@
-# Copyright 2020 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# -------------------------
+# Builder stage
 
-FROM --platform=$BUILDPLATFORM python:3.12.8-alpine@sha256:54bec49592c8455de8d5983d984efff76b6417a6af9b5dcc8d0237bf6ad3bd20 AS base
+FROM --platform=$BUILDPLATFORM python:3.12-slim AS builder
+WORKDIR /app
 
-FROM base AS builder
+# Install build dependencies for Python native extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    libssl-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apk update \
-    && apk add --no-cache g++ linux-headers \
-    && rm -rf /var/cache/apk/*
-
-# get packages
+# Install Python dependencies into a separate prefix
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --prefix=/install -r requirements.txt
 
-FROM base
-# Enable unbuffered logging
+
+# -------------------------
+# Final runtime image
+# -------------------------
+FROM python:3.12-slim
+
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
 
-RUN apk update \
-    && apk add --no-cache libstdc++ \
-    && rm -rf /var/cache/apk/*
-
-# get packages
 WORKDIR /recommendationservice
 
-# Grab packages from builder
-COPY --from=builder /usr/local/lib/python3.12/ /usr/local/lib/python3.12/
+# Copy Python installed packages from builder
+COPY --from=builder /install /usr/local
 
-# Add the application
+# Copy application code
 COPY . .
 
-# set listen port
-ENV PORT "8080"
 EXPOSE 8080
-
 ENTRYPOINT ["python", "recommendation_server.py"]
