@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: online-boutique
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend        # ✔ MUST MATCH the selector
+      # annotations:
+      #   sidecar.istio.io/inject: "true"   # ✔ correct place
+    spec:
+      containers:
+        - name: frontend
+          image: shivamsharma0309/microsvc_frontend:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: productcatalogservice:3550
+            - name: CURRENCY_SERVICE_ADDR
+              value: currencyservice:7000
+            - name: CART_SERVICE_ADDR
+              value: cartservice:7070
+            - name: RECOMMENDATION_SERVICE_ADDR
+              value: recommendationservice:8080
+            - name: SHIPPING_SERVICE_ADDR
+              value: shippingservice:50051
+            - name: CHECKOUT_SERVICE_ADDR
+              value: checkoutservice:5050
+            - name: AD_SERVICE_ADDR
+              value: adservice:9555
+            - name: SHOPPING_ASSISTANT_SERVICE_ADDR
+              value: shoppingassistantservice:80
+
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5

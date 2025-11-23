@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: currencyservice
+  namespace: online-boutique
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: currencyservice
+  template:
+    metadata:
+      labels:
+        app: currencyservice
+    spec:
+      containers:
+        - name: currencyservice
+          image: shivamsharma0309/microsvc-currency:v1
+          ports:
+            - containerPort: 7000
+          env:
+            - name: PORT
+              value: "7000"
+            - name: DISABLE_PROFILER
+              value: "true"
+          resources:
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+            requests:
+              cpu: "150m"
+              memory: "128Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 7000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 7000
+            initialDelaySeconds: 5
+            periodSeconds: 5
