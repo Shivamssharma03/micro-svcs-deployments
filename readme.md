@@ -6,7 +6,6 @@ This deployment version is fully production-ready and runs on **Amazon EKS** wit
 - NGINX Ingress Controller  
 - Let’s Encrypt DNS01 TLS (Cloudflare)  
 - Helm umbrella chart  
-- gRPC microservices  
 - Kubernetes-native scaling and service discovery  
 
 
