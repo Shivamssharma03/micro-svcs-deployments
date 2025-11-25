@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.paymentservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: paymentservice
+  template:
+    metadata:
+      labels:
+        app: paymentservice
+    spec:
+      containers:
+        - name: paymentservice
+          image: {{ .Values.paymentservice.image }}
+          ports:
+            - containerPort: {{ .Values.paymentservice.service.targetPort }}
+          env:
+              - name: DISABLE_PROFILER
+                value: "{{ .Values.paymentservice.env.DISABLE_PROFILER }}"
+              - name: PORT
+                value: "{{ .Values.paymentservice.env.PORT }}"  
+          resources:
+            requests:
+              cpu: {{ .Values.paymentservice.resources.requests.cpu }}
+              memory: {{ .Values.paymentservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.paymentservice.resources.limits.cpu }}
+              memory: {{ .Values.paymentservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: paymentservice
+  ports:
+    - port: {{ .Values.paymentservice.service.port }}
+      targetPort: {{ .Values.paymentservice.service.targetPort }}

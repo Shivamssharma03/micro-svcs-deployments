@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shoppingassistantservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.shoppingassistantservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: shoppingassistantservice
+  template:
+    metadata:
+      labels:
+        app: shoppingassistantservice
+    spec:
+      containers:
+        - name: shoppingassistantservice
+          image: {{ .Values.shoppingassistantservice.image }}
+          ports:
+            - containerPort: {{ .Values.shoppingassistantservice.service.targetPort }}
+          resources:
+            requests:
+              cpu: {{ .Values.shoppingassistantservice.resources.requests.cpu }}
+              memory: {{ .Values.shoppingassistantservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.shoppingassistantservice.resources.limits.cpu }}
+              memory: {{ .Values.shoppingassistantservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shoppingassistantservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: shoppingassistantservice
+  ports:
+    - port: {{ .Values.shoppingassistantservice.service.port }}
+      targetPort: {{ .Values.shoppingassistantservice.service.targetPort }}

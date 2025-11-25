@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgenerator
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.loadgenerator.replicaCount }}
+  selector:
+    matchLabels:
+      app: loadgenerator
+  template:
+    metadata:
+      labels:
+        app: loadgenerator
+    spec:
+      containers:
+        - name: loadgenerator
+          image: {{ .Values.loadgenerator.image }}
+          ports:
+            - containerPort: {{ .Values.loadgenerator.service.targetPort }}
+          env: 
+              - name: FRONTEND_ADDR
+                value: "{{ .Values.loadgenerator.env.FRONTEND_ADDR }}"
+          resources:
+            requests:
+              cpu: {{ .Values.loadgenerator.resources.requests.cpu }}
+              memory: {{ .Values.loadgenerator.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.loadgenerator.resources.limits.cpu }}
+              memory: {{ .Values.loadgenerator.resources.limits.memory }}
+
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: loadgenerator
+#   namespace: {{ .Values.namespace }}
+# spec:
+#   type: ClusterIP
+#   selector:
+#     app: loadgenerator
+#   ports:
+#     - port: {{ .Values.loadgenerator.service.port }}
+#       targetPort: {{ .Values.loadgenerator.service.targetPort }}

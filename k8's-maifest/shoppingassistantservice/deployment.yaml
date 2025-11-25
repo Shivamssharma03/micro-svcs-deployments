@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: shoppingassistantservice
-          image: shivamsharma0309/microsvc-shopingassistant:v1
+          image: shivamsharma0309/microsvcs-shoppingassistant:v3
           ports:
             - containerPort: 80
           resources:

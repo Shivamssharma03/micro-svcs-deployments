@@ -94,6 +94,7 @@ h11==0.16.0
 httpcore==1.0.9
     # via httpx
 aiohttp>=3.9.0
+langgraph>=0.1.0
 
 httpx==0.28.1
     # via langsmith

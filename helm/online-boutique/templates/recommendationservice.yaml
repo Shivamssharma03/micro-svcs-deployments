@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendationservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.recommendationservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: recommendationservice
+  template:
+    metadata:
+      labels:
+        app: recommendationservice
+    spec:
+      containers:
+        - name: recommendationservice
+          image: {{ .Values.recommendationservice.image }}
+          ports:
+            - containerPort: {{ .Values.recommendationservice.service.targetPort }}
+          env:
+          - name: PRODUCT_CATALOG_SERVICE_ADDR
+            value: "{{ .Values.recommendationservice.env.PRODUCT_CATALOG_SERVICE_ADDR }}"
+          resources:
+            requests:
+              cpu: {{ .Values.recommendationservice.resources.requests.cpu }}
+              memory: {{ .Values.recommendationservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.recommendationservice.resources.limits.cpu }}
+              memory: {{ .Values.recommendationservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendationservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: recommendationservice
+  ports:
+    - port: {{ .Values.recommendationservice.service.port }}
+      targetPort: {{ .Values.recommendationservice.service.targetPort }}

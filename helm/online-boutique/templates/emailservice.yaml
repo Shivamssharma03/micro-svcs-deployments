@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emailservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.emailservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: emailservice
+  template:
+    metadata:
+      labels:
+        app: emailservice
+    spec:
+      containers:
+        - name: emailservice
+          image: {{ .Values.emailservice.image }}
+          ports:
+            - containerPort: {{ .Values.emailservice.service.targetPort }}
+          resources:
+            requests:
+              cpu: {{ .Values.emailservice.resources.requests.cpu }}
+              memory: {{ .Values.emailservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.emailservice.resources.limits.cpu }}
+              memory: {{ .Values.emailservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emailservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: emailservice
+  ports:
+    - port: {{ .Values.emailservice.service.port }}
+      targetPort: {{ .Values.emailservice.service.targetPort }}

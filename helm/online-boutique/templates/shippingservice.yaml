@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shippingservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.shippingservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: shippingservice
+  template:
+    metadata:
+      labels:
+        app: shippingservice
+    spec:
+      containers:
+        - name: shippingservice
+          image: {{ .Values.shippingservice.image }}
+          ports:
+            - containerPort: {{ .Values.shippingservice.service.targetPort }}
+          env:
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: "{{ .Values.shippingservice.env.PRODUCT_CATALOG_SERVICE_ADDR }}"
+          resources:
+            requests:
+              cpu: {{ .Values.shippingservice.resources.requests.cpu }}
+              memory: {{ .Values.shippingservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.shippingservice.resources.limits.cpu }}
+              memory: {{ .Values.shippingservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shippingservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: shippingservice
+  ports:
+    - port: {{ .Values.shippingservice.service.port }}
+      targetPort: {{ .Values.shippingservice.service.targetPort }}

@@ -1,2 +1,0 @@
-frotnend folder 
-shipping folder 

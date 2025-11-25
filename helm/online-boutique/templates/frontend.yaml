@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: {{ .Values.frontend.image }}
+          ports:
+            - containerPort: {{ .Values.frontend.service.targetPort }}
+          env:
+            - name: PORT
+              value: "{{ .Values.frontend.env.PORT }}"
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.PRODUCT_CATALOG_SERVICE_ADDR }}"
+            - name: CURRENCY_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.CURRENCY_SERVICE_ADDR }}"
+            - name: CART_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.CART_SERVICE_ADDR }}"
+            - name: RECOMMENDATION_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.RECOMMENDATION_SERVICE_ADDR }}"
+            - name: SHIPPING_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.SHIPPING_SERVICE_ADDR }}"
+            - name: CHECKOUT_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.CHECKOUT_SERVICE_ADDR }}"
+            - name: AD_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.AD_SERVICE_ADDR }}"
+            - name: SHOPPING_ASSISTANT_SERVICE_ADDR
+              value: "{{ .Values.frontend.env.SHOPPING_ASSISTANT_SERVICE_ADDR }}"
+            - name: ENABLE_PROFILER
+              value: "{{ .Values.frontend.env.ENABLE_PROFILER }}"
+            - name: ENABLE_TRACING
+              value: "{{ .Values.frontend.env.ENABLE_TRACING }}"
+          resources:
+            requests:
+              cpu: {{ .Values.frontend.resources.requests.cpu }}
+              memory: {{ .Values.frontend.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.frontend.resources.limits.cpu }}
+              memory: {{ .Values.frontend.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: {{ .Values.namespace }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  selector:
+    app: frontend
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.service.targetPort }}

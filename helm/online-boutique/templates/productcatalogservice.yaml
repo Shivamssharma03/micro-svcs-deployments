@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productcatalogservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.productcatalogservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: productcatalogservice
+  template:
+    metadata:
+      labels:
+        app: productcatalogservice
+    spec:
+      containers:
+        - name: productcatalogservice
+          image: {{ .Values.productcatalogservice.image }}
+          ports:
+            - containerPort: {{ .Values.productcatalogservice.service.targetPort }}
+          resources:
+            requests:
+              cpu: {{ .Values.productcatalogservice.resources.requests.cpu }}
+              memory: {{ .Values.productcatalogservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.productcatalogservice.resources.limits.cpu }}
+              memory: {{ .Values.productcatalogservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: productcatalogservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: productcatalogservice
+  ports:
+    - port: {{ .Values.productcatalogservice.service.port }}
+      targetPort: {{ .Values.productcatalogservice.service.targetPort }}

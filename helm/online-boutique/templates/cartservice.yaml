@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cartservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.cartservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: cartservice
+  template:
+    metadata:
+      labels:
+        app: cartservice
+    spec:
+      containers:
+        - name: cartservice
+          image: {{ .Values.cartservice.image }}
+          ports:
+            - containerPort: {{ .Values.cartservice.service.targetPort }}
+          env:
+            - name: REDIS_ADDRESS
+              value: "{{ .Values.cartservice.env.REDIS_ADDRESS }}"
+          resources:
+            requests:
+              cpu: {{ .Values.cartservice.resources.requests.cpu }}
+              memory: {{ .Values.cartservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.cartservice.resources.limits.cpu }}
+              memory: {{ .Values.cartservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cartservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: cartservice
+  ports:
+    - port: {{ .Values.cartservice.service.port }}
+      targetPort: {{ .Values.cartservice.service.targetPort }}

@@ -1,0 +1,243 @@
+namespace: online-boutique
+
+redis:
+  replicaCount: 1
+  image: redis:7.2-alpine
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+  service:
+    port: 6379
+    targetPort: 6379
+
+productcatalogservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-productcatalog:v1
+  service:
+    port: 3550
+    targetPort: 3550
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+  env: {}
+
+currencyservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-currency:v1
+  service:
+    port: 7000
+    targetPort: 7000
+  env: 
+    DISABLE_PROFILER: "true"
+    PORT: "7000"
+    # ENV VAR CAN BE DEFINED AS BELOW ALSO
+    # - name: DISABLE_PROFILER
+    #value: "true"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+cartservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-cartservice:v1
+  service:
+    port: 7070
+    targetPort: 7070
+  env:
+    REDIS_ADDRESS: "redis:6379"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+recommendationservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-recomendation:v1
+  service:
+    port: 8080
+    targetPort: 8080
+  env: 
+    PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"   
+    #ENV VAR CAN BE DEFINED AS BELOW ALSO
+    # - name: PRODUCT_CATALOG_SERVICE_ADDR
+    #value: productcatalogservice:3550
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+shippingservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-shipping:v1
+  service:
+    port: 50051
+    targetPort: 50051
+  env: 
+     PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+paymentservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-payment:v1
+  service:
+    port: 50051
+    targetPort: 50051
+  env: 
+    DISABLE_PROFILER: "true"
+    PORT: "50051"
+    
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+emailservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-email:v1
+  service:
+    port: 8080
+    targetPort: 8080
+  env: {}
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+shoppingassistantservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvcs-shoppingassistant:v3
+  service:
+    port: 8080
+    targetPort: 8080
+  env:
+    PORT: "8080"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "300m"
+      memory: "512Mi"
+
+
+loadgenerator:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-loadgenerator:v1
+  service:
+    port: 80
+    targetPort: 80
+  env:
+    FRONTEND_ADDR: "frontend:8080"
+    USERS: "10"
+    RATE: "1"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+frontend:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc_frontend:v1
+  service:
+    type: ClusterIP # or ClusterIP if using Ingress
+    port: 80
+    targetPort: 8080
+  env:
+    PORT: "8080"
+    PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+    CURRENCY_SERVICE_ADDR: "currencyservice:7000"
+    CART_SERVICE_ADDR: "cartservice:7070"
+    RECOMMENDATION_SERVICE_ADDR: "recommendationservice:8080"
+    SHIPPING_SERVICE_ADDR: "shippingservice:50051"
+    CHECKOUT_SERVICE_ADDR: "checkoutservice:5050"
+    AD_SERVICE_ADDR: "adservice:9555"
+    SHOPPING_ASSISTANT_SERVICE_ADDR: "shoppingassistantservice:8080"
+    ENABLE_PROFILER: "0"
+    ENABLE_TRACING: "0"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "400m"
+      memory: "512Mi"
+
+adservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvcs-adservice:v1
+  service:
+    port: 9555
+    targetPort: 9555
+  env: 
+    PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+checkoutservice:
+  replicaCount: 1
+  image: shivamsharma0309/microsvc-checkout:v1
+  service:
+    port: 5050
+    targetPort: 5050
+  env: 
+      CART_SERVICE_ADDR: "cartservice:7070"
+      PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+      CURRENCY_SERVICE_ADDR: "currencyservice:7000"
+      PAYMENT_SERVICE_ADDR: "paymentservice:50051"
+      EMAIL_SERVICE_ADDR: "emailservice:8080"
+      SHIPPING_SERVICE_ADDR: "shippingservice:50051"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "tesify.site"
+  path: "/"
+  tls:
+    enabled: false
+    secretName: ""

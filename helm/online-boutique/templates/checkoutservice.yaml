@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkoutservice
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.checkoutservice.replicaCount }}
+  selector:
+    matchLabels:
+      app: checkoutservice
+  template:
+    metadata:
+      labels:
+        app: checkoutservice
+    spec:
+      containers:
+        - name: checkoutservice
+          image: {{ .Values.checkoutservice.image }}
+          ports:
+            - containerPort: {{ .Values.checkoutservice.service.targetPort }}
+          env:
+            - name: CART_SERVICE_ADDR
+              value: "{{ .Values.checkoutservice.env.CART_SERVICE_ADDR }}"
+            - name: PRODUCT_CATALOG_SERVICE_ADDR
+              value: "{{ .Values.checkoutservice.env.PRODUCT_CATALOG_SERVICE_ADDR }}"
+            - name: CURRENCY_SERVICE_ADDR
+              value: "{{ .Values.checkoutservice.env.CURRENCY_SERVICE_ADDR }}"
+            - name: PAYMENT_SERVICE_ADDR
+              value: "{{ .Values.checkoutservice.env.PAYMENT_SERVICE_ADDR }}"
+            - name: SHIPPING_SERVICE_ADDR 
+              value: "{{ .Values.checkoutservice.env.SHIPPING_SERVICE_ADDR }}"
+            - name: EMAIL_SERVICE_ADDR
+              value: "{{ .Values.checkoutservice.env.EMAIL_SERVICE_ADDR }}"
+  
+          resources:
+            requests:
+              cpu: {{ .Values.checkoutservice.resources.requests.cpu }}
+              memory: {{ .Values.checkoutservice.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.checkoutservice.resources.limits.cpu }}
+              memory: {{ .Values.checkoutservice.resources.limits.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkoutservice
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: checkoutservice
+  ports:
+    - port: {{ .Values.checkoutservice.service.port }}
+      targetPort: {{ .Values.checkoutservice.service.targetPort }}
