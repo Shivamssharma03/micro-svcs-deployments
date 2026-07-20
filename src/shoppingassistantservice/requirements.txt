@@ -29,7 +29,7 @@ charset-normalizer==3.4.3
     # via requests
 click==8.3.0
     # via flask
-cryptography==46.0.1
+cryptography==48.0.1
     # via google-cloud-alloydb-connector
 filetype==1.2.0
     # via langchain-google-genai
@@ -93,9 +93,6 @@ h11==0.16.0
     # via httpcore
 httpcore==1.0.9
     # via httpx
-aiohttp>=3.9.0
-langgraph>=0.1.0
-
 httpx==0.28.1
     # via langsmith
 idna==3.10
